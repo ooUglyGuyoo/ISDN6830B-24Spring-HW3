@@ -12,9 +12,10 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using static UnityEngine.XR.ARSubsystems.XRCpuImage;
 
-
 public class HW3 : MonoBehaviour
 {
+    public static Vector3 pointOnScreen = new Vector2(0.0f, 0.0f);
+
     [SerializeField]
     String hostIP;
     [SerializeField]
@@ -28,7 +29,6 @@ public class HW3 : MonoBehaviour
 
     private TcpClient socketConnection;
     private Thread clientReceiveThread;
-
 
     public void captureCameraImage() {
 
@@ -105,7 +105,7 @@ public class HW3 : MonoBehaviour
                 Byte[] bytes = new Byte[1024];
                 while (true)
                 {
-                    // Get a stream object for reading 				
+                    // Get a stream object for reading
                     Debug.Log("Start Reading");
                     byte[] datatype = new byte[4];
                     stream.Read(datatype, 0, 4);
@@ -122,6 +122,13 @@ public class HW3 : MonoBehaviour
                         string message = Encoding.UTF8.GetString(incommingData); // Convert bytes to string
                         log.text += "Received Message: " + message + "\n";
                         Debug.Log("Received Message: " + message);
+
+                        // transfer message to pointOnScreen
+                        string[] components = message.Trim().Split(' ');
+                        float x = float.Parse(components[0]);
+                        float y = float.Parse(components[1]);
+                        pointOnScreen = new Vector2(x, y);
+                        Debug.Log("Point on screen: " + pointOnScreen.ToString());
                     }
                 }
             }
