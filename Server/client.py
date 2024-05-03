@@ -38,4 +38,4 @@ def send_image(image_path, host, port):
     client_socket.close()
 
 # Example usage
-send_image("lena.jpg", "127.0.0.1", 12345)
+send_image("./Server/lena.jpg", "127.0.0.1", 2333)

@@ -1,5 +1,7 @@
 # Credit to https://github.com/katmfoo/python-client-server for providing the network basecode
 
+from ultralytics import YOLO
+from ultralytics.utils.plotting import Annotator
 import socket
 import threading
 import cv2
@@ -8,6 +10,9 @@ import numpy as np
 #Variables for holding information about connections
 connections = []
 total_connections = 0
+
+model = YOLO('best.pt') # load YOLOv8 model
+pointOnScreen = np.array([0,0]) # initialize point on screen to be sent to client
 
 #Client class, new instance created for each connected client
 #Each instance has the socket and address that is associated with items
@@ -20,10 +25,10 @@ class Client(threading.Thread):
         self.id = id
         self.name = name
         self.signal = signal
-    
+
     def __str__(self):
         return str(self.id) + " " + str(self.address)
-    
+
     # Ensures that we pull the entire expected length of data
     # Normally, for small chunks of data, it should be fine, but larger chunks may need to be pulled in several batches
     def getdataofsize(self,size):
@@ -40,15 +45,43 @@ class Client(threading.Thread):
         message = b"".join(total_data)
         return message
 
-    # Where you should do your data processing. 
+    # Where you should do your data processing.
     # Here, I just convert the raw byte array to an RGB image that numpy understands and display it.
     def processimage(self, message, width, height):
         image=np.asarray(bytearray(message), dtype=np.uint8 ).reshape( height,width, 3 )
-        image_rgb=np.flip(image, axis=-1) 
+        image_rgb=np.flip(image, axis=0)
         image_rgb_rotated = cv2.rotate(image_rgb, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        cv2.imshow("image", image_rgb_rotated)
-        cv2.waitKey(0)
-        cv2.destroyWindow("image") 
+        
+        # imshow disabled to get a instant feedback from the server
+        # cv2.imshow("image", image_rgb_rotated)
+        # cv2.waitKey(0)
+        # cv2.destroyWindow("image")
+        
+        results = model.predict(image_rgb_rotated) # predict image using YOLOv8 model
+
+        # get the boxes and classes from the results, get center of the bounding box
+        for r in results:
+
+            annotator = Annotator(image_rgb_rotated, line_width=3, pil=True)
+            boxes = r.boxes
+            for box in boxes:
+
+                b = box.xyxy[0]  # get box coordinates in (left, top, right, bottom) format
+                print(b,b[0],b[1],b[2],b[3])
+                global pointOnScreen
+                pointOnScreen = np.array(([  ((b[0]+b[1])/2).numpy(), ((b[2]+b[3])/2).numpy()   ]))
+                print(pointOnScreen)
+                c = box.cls
+                print(c)
+                annotator.box_label(b, model.names[int(c)])
+
+        image_rgb_rotated = annotator.result()
+        
+        # imshow disabled to get a instant feedback from the server
+        # cv2.imshow("YOLO V8 Detection", image_rgb_rotated)
+        # cv2.waitKey(0)
+        # cv2.destroyWindow("YOLO V8 Detection")
+
 
 
     #Attempt to get data from client
@@ -80,13 +113,15 @@ class Client(threading.Thread):
                     # Debug message, uncomment if something goes wrong and the data is not properly received
                     #print("Data received: "+str(len(message))+"B")
                     self.processimage(message, width, height)
-                    
+
                     replytype = 1
                     datareplytype = replytype.to_bytes(4,'little')
                     print("replytype")
 
-                    replymessage = "Well Received" 
-                    replylength = len(replymessage.encode())
+                    pointOnScreen_string = np.array2string(pointOnScreen)
+
+                    replymessage = pointOnScreen_string
+                    replylength = len(pointOnScreen_string)
                     datareplylength = replylength.to_bytes(4, 'little')
 
                     self.socket.sendall(datareplytype)
@@ -112,8 +147,8 @@ def newConnections(socket):
 
 def main():
     #Get host and port
-    host = "0.0.0.0" 
-    port = 12345
+    host = "0.0.0.0"  # "0.0.0.0" for any IP address
+    port = 2333         # Change the port if there is error
 
     #Create new server socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -125,5 +160,5 @@ def main():
     #Create new thread to wait for connections
     newConnectionsThread = threading.Thread(target = newConnections, args = (sock,))
     newConnectionsThread.start()
-    
+
 main()

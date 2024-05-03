@@ -17,7 +17,7 @@ public class HW3 : MonoBehaviour
 {
     [SerializeField]
     String hostIP;
-    [SerializeField] 
+    [SerializeField]
     int hostPort;
 
     [SerializeField]
@@ -147,10 +147,10 @@ public class HW3 : MonoBehaviour
         }
         try
         {
-            // Get a stream object for writing. 			
+            // Get a stream object for writing.
             NetworkStream stream = socketConnection.GetStream();
-            if (stream.CanWrite) { 
-            
+            if (stream.CanWrite) {
+
                 byte[] messageType = BitConverter.GetBytes(type);
                 stream.Write(messageType, 0, messageType.Length);
 
@@ -166,7 +166,7 @@ public class HW3 : MonoBehaviour
                 byte[] imageBytes = rawImage.ToArray();
                 stream.Write(imageBytes, 0, rawImage.Length);
 
-                // Write byte array to socketConnection stream.                 
+                // Write byte array to socketConnection stream.
                 log.text += "Client sent his message - should be received by server" + "\n";
                 Debug.Log("Client sent his message - should be received by server");
             }
@@ -183,7 +183,6 @@ public class HW3 : MonoBehaviour
     void Start()
     {
         ConnectToTcpServer();
-        
     }
 
 
