@@ -14,10 +14,17 @@ using static UnityEngine.XR.ARSubsystems.XRCpuImage;
 
 public class HW3 : MonoBehaviour
 {
-    public static Vector3 pointOnScreen = new Vector2(0.0f, 0.0f);
+    public static Vector2 pointOnScreen = new Vector2(0.0f, 0.0f);
+
+    [SerializeField]
+    public ARRaycastManager raycastManager; // Reference to the ARRaycastManager
+    
+    [SerializeField]
+    public GameObject objectPrefab; // Reference to the prefab of the object to be created
 
     [SerializeField]
     String hostIP;
+    
     [SerializeField]
     int hostPort;
 
@@ -29,6 +36,7 @@ public class HW3 : MonoBehaviour
 
     private TcpClient socketConnection;
     private Thread clientReceiveThread;
+
 
     public void captureCameraImage() {
 
@@ -93,8 +101,8 @@ public class HW3 : MonoBehaviour
         }
     }
 
-    /// Runs in background clientReceiveThread; Listens for incomming data. 	
-    /// </summary>     
+    /// Runs in background clientReceiveThread; Listens for incomming data.
+    /// </summary>
     private void ListenForData()
     {
         try
@@ -124,14 +132,46 @@ public class HW3 : MonoBehaviour
                         Debug.Log("Received Message: " + message);
 
                         // transfer message to pointOnScreen
-                        string[] components = message.Trim().Split(' ');
+                        // log.text += "Calculating point on screen..." + "\n";
+                        // Remove the square brackets and any extra spaces
+                        string inputString = message.Replace("[", "").Replace("]", "").Trim();
+                        // Split the string by spaces
+                        string[] components = inputString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        // log.text += "Debug Flag" + components[0] + components[1] + "end" + "\n";
+                        // Parse the components as floats
                         float x = float.Parse(components[0]);
                         float y = float.Parse(components[1]);
-                        pointOnScreen = new Vector2(x, y);
+                        // log.text += "Debug Flag" + "\n";
+                        // Create a Vector2 using the parsed values
+                        pointOnScreen.x = x;
+                        pointOnScreen.y = y;
+                        log.text += "Point on screen: " + pointOnScreen + "\n";
                         Debug.Log("Point on screen: " + pointOnScreen.ToString());
+                        Vector2 pointOnScreenV2 = new Vector2(pointOnScreen.x, pointOnScreen.y);
+                        Vector3 pointOnScreenV3 = new Vector3(pointOnScreen.x, pointOnScreen.y, 0f);
+                        Vector2 screenCenter = new Vector2(Screen.width / 2, Screen.height / 2);
+                        log.text += pointOnScreenV2 + "\n";
+                        log.text += pointOnScreenV3 + "\n";
+                        log.text += screenCenter + "\n";
+                        List<ARRaycastHit> hits = new List<ARRaycastHit>();
+                        log.text += "Debug Flag" + "\n";
+                        if(raycastManager.Raycast(screenCenter, hits, UnityEngine.XR.ARSubsystems.TrackableType.Planes))
+                        {
+                            log.text += "Debug Flag" + "\n";
+                            if (hits.Count > 0)
+                            {
+                                log.text += "Debug Flag" + "\n";
+                                GameObject.Instantiate(objectPrefab, hits[0].pose.position, hits[0].pose.rotation);
+                                log.text += "Debug Flag" + "\n";
+                            }
+                        }
+                        
+                        log.text += "Debug Flag" + "\n";
                     }
+
                 }
             }
+            
         }
         catch (SocketException socketException)
         {
@@ -192,5 +232,8 @@ public class HW3 : MonoBehaviour
         ConnectToTcpServer();
     }
 
-
+    private void Awake()
+    {
+        raycastManager = GetComponent<ARRaycastManager>();
+    }
 }
