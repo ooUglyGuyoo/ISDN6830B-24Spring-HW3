@@ -144,31 +144,20 @@ public class HW3 : MonoBehaviour
                         // log.text += "Debug Flag" + "\n";
                         // Create a Vector2 using the parsed values
                         pointOnScreen.x = x;
-                        pointOnScreen.y = y;
-                        log.text += "Point on screen: " + pointOnScreen + "\n";
+                        pointOnScreen.y = y; // Unity uses normalized device coordinates, where (0,0) represents the bottom-left corner of the screen, and (1,1) represents the top-right corner.
+                        Vector2 normalizedPoint = new Vector2(pointOnScreen.x / Screen.width, pointOnScreen.y / Screen.height);
+                        log.text += "Pixel Point on screen: " + pointOnScreen + ";" + "Normalized Point on screen: " + normalizedPoint + "\n";
                         Debug.Log("Point on screen: " + pointOnScreen.ToString());
-                        Vector2 pointOnScreenV2 = new Vector2(pointOnScreen.x, pointOnScreen.y);
-                        Vector3 pointOnScreenV3 = new Vector3(pointOnScreen.x, pointOnScreen.y, 0f);
-                        Vector2 screenCenter = new Vector2(Screen.width / 2, Screen.height / 2);
-                        log.text += pointOnScreenV2 + "\n";
-                        log.text += pointOnScreenV3 + "\n";
-                        log.text += screenCenter + "\n";
-                        List<ARRaycastHit> hits = new List<ARRaycastHit>();
-                        log.text += "Debug Flag" + "\n";
-                        if(raycastManager.Raycast(screenCenter, hits, UnityEngine.XR.ARSubsystems.TrackableType.Planes))
-                        {
-                            log.text += "Debug Flag" + "\n";
-                            if (hits.Count > 0)
-                            {
-                                log.text += "Debug Flag" + "\n";
-                                GameObject.Instantiate(objectPrefab, hits[0].pose.position, hits[0].pose.rotation);
-                                log.text += "Debug Flag" + "\n";
-                            }
-                        }
-                        
-                        log.text += "Debug Flag" + "\n";
-                    }
 
+                        Ray ray = cameraManager.GetComponent<Camera>().ViewportPointToRay(new Vector3(normalizedPoint.x, normalizedPoint.y, 0f));
+                        RaycastHit hit;
+                        if (Physics.Raycast(ray, out hit))
+                        {
+                            log.text += "Create Object" + "\n";
+                            // Instantiate the object at the hit point in 3D space
+                            Instantiate(objectPrefab, hit.point, Quaternion.identity);
+                        }
+                    }
                 }
             }
             

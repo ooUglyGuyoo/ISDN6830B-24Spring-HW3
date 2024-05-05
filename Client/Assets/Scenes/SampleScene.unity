@@ -894,8 +894,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1114040582}
   - component: {fileID: 1114040581}
-  - component: {fileID: 1114040583}
   - component: {fileID: 1114040584}
+  - component: {fileID: 1114040583}
   m_Layer: 0
   m_Name: XR Origin
   m_TagString: Untagged
@@ -1454,7 +1454,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 2089110261}
   - {fileID: 1114040582}
+  - {fileID: 165585590}
   - {fileID: 1828601339}
   - {fileID: 223974229}
   - {fileID: 782628377}
-  - {fileID: 165585590}
